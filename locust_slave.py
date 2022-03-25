@@ -12,7 +12,7 @@ class QuickstartUser(HttpUser):
 
     @events.test_start.add_listener
     def setup(environment, **kwargs):
-        print("***********************************************************************************", flush=True)
+
         user_json = {
             "email": "user@user.com",
             "firstName": "user2",
@@ -20,6 +20,22 @@ class QuickstartUser(HttpUser):
             "password": "password",
             "username": "user2"
         }
+
+        card_json = {
+            "longNum": "1111222233334444",
+            "expires": "01/25",
+            "ccv": "756"
+        }
+
+        address_json = {
+            "street": "Baumallee",
+            "number": "5",
+            "country": "Schweiz",
+            "city": "Hogsmeade",
+            "postcode": "0000"
+        }
+
+        print("***********************************************************************************", flush=True)
         customers = requests.get(environment.host + '/customers').json()['_embedded']['customer']
 
         for customer in customers:
@@ -32,19 +48,6 @@ class QuickstartUser(HttpUser):
         customer_id = resp.json()['id']
         print(customer_id)
 
-        card_json = {
-          "longNum": "1111222233334444",
-          "expires": "01/25",
-          "ccv": "756"
-        }
-
-        address_json = {
-          "street": "Baumallee",
-          "number": "5",
-          "country": "Schweiz",
-          "city": "Hogsmeade",
-          "postcode": "0000"
-        }
         session = requests.session()
         session.get(environment.host + "/login", auth=(user_json['username'], user_json['password']))
 
@@ -77,8 +80,9 @@ class QuickstartUser(HttpUser):
 #
     @task(1)
     def orders(self):
-        #self.client.get("/login", auth=(self.username, self.password))
-        self.client.get("/orders")
+        self.client.get("/login", auth=(self.username, self.password))
+        resp = self.client.get("/orders")
+        #print(resp.status_code, flush=True)
 
     @task(1)
     def basket(self):
@@ -94,7 +98,6 @@ class QuickstartUser(HttpUser):
         item_id = category_item["id"]
         self.client.get("/detail.html?id={}".format(item_id))
         self.client.post("/cart", json={"id": item_id, "quantity": 1})
-
 
         resp = self.client.post("/orders")
         #if resp.json().get('id') is not None:
